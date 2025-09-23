@@ -1,7 +1,7 @@
 const asyncHandler = require("../utils/asyncHandler");
 const { ApiError } = require("../utils/ApiError");
 const User = require("../models/user.models");
-const uploadToCloudinary = require("../utils/Cloudinary");
+const { uploadToCloudinary } = require("../utils/Cloudinary");
 const { ApiResponse } = require("../utils/ApiResponse");
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -24,13 +24,15 @@ const registerUser = asyncHandler(async (req, res) => {
   }
   //check for image and avatar
 
-  const avtarLocalPath = req.files?.avatar[0].path;
-  const coverImageLocalPath = req.files?.coverImage[0].path;
+  const avtarLocalPath = req.files?.avatar?.[0]?.path;
+  console.log("Avatar local path", req.file);
+  const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
   if (!avtarLocalPath) {
     throw new ApiError(400, "Avatar file is required");
   }
   //upload image on cloudinary
   const avtar = await uploadToCloudinary(avtarLocalPath);
+  console.log("Avatar URL >>>>>>>>>>>>>>>>>>>>>>>>>", avtar.url);
   let coverImage;
   if (coverImageLocalPath) {
     coverImage = await uploadToCloudinary(coverImageLocalPath);
@@ -42,8 +44,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const user = await User.create({
     fullname,
-    avatar: avtar,
-    coverImage,
+    avatar: avtar.secure_url,
+    coverImage: coverImage?.secure_url,
     email,
     password,
     username,
@@ -51,7 +53,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   //return response
 
-  const createdUser = await User.find(user._id).select(
+  const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
 
@@ -60,15 +62,16 @@ const registerUser = asyncHandler(async (req, res) => {
   }
   res
     .status(200)
-    .json(ApiResponse(200, createdUser, "User registered Successfully"));
+    .json(new ApiResponse(200, createdUser, "User registered Successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
   // Take username and password
+
   const { username, email, password } = req.body;
 
   // Check either or the username or email is required
-  if (!username || !email) {
+  if (!(username || email)) {
     throw new ApiError(400, "username or password is required");
   }
 
@@ -81,10 +84,11 @@ const loginUser = asyncHandler(async (req, res) => {
   // Validate the username
   // Validate the password
 
-  const isPasswordValid = user.isPasswordCorrect(password);
+  const isPasswordValid = await user.isPasswordCorrect(password);
   if (!isPasswordValid) {
     throw new ApiError(401, "Invalid user credentials");
   }
+  console.log("Here>>>>>>>>>>>>", user);
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     user._id
@@ -100,15 +104,26 @@ const loginUser = asyncHandler(async (req, res) => {
     secure: true,
   };
 
+  // res
+  //   .status(200)
+  //   .cookie("accessToken", accessToken, options)
+  //   .cookie("refreshToken", refreshToken, options)
+  //   .json(
+  //     200,
+  //     { user: loggedInUser.refreshToken, refreshToken },
+  //     "User logged in Successfully"
+  //   );
+
   res
     .status(200)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
-    .json(
-      200,
-      { user: loggedInUser.refreshToken, refreshToken },
-      "User logged in Successfully"
-    );
+    .json({
+      success: true,
+      message: "User logged in successfully",
+      user: loggedInUser,
+      refreshToken,
+    });
 });
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -145,10 +160,16 @@ const logoutUser = asyncHandler(async (req, res) => {
     secure: true,
   };
 
-  return res  
-    .status(200)
+  // return res
+  //   .status(200)
+  //   .clearCookie("accessToken", options)
+  //   .clearCookie("refreshToken", options);
+
+  res
     .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options);
+    .clearCookie("refreshToken", options)
+    .status(200)
+    .json({ success: true, message: "Logged out successfully" });
 });
 
 const getUser = asyncHandler(async (req, res) => {
