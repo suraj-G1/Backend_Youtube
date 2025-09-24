@@ -222,6 +222,33 @@ const resetAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
+const changePassword = asyncHandler(async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword) {
+      throw new ApiError(401, "Old Password is required");
+    }
+    if (!newPassword) {
+      throw new ApiError(401, "New password is required");
+    }
+
+    const user = await User.findById(req.user?._id);
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+    if (!isPasswordCorrect) {
+      throw new ApiError(400, "Old password is incorrect");
+    }
+
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Password Changed Successfully"));
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong");
+  }
+});
+
 module.exports = {
   registerUser,
   loginUser,
