@@ -1,7 +1,6 @@
 const express = require("express");
 const {
   registerUser,
-  getUser,
   loginUser,
   logoutUser,
   resetAccessToken,
@@ -20,6 +19,5 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);
-//router.route("/register").get(getUser);
- router.route("/refresh-token").post(resetAccessToken)
+router.route("/refresh-token").post(resetAccessToken);
 module.exports = router;

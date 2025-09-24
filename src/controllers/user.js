@@ -172,10 +172,6 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json({ success: true, message: "Logged out successfully" });
 });
 
-const getUser = asyncHandler(async (req, res) => {
-  res.send("Hi");
-});
-
 const resetAccessToken = asyncHandler(async (req, res) => {
   try {
     const incomingRefreshToken =
@@ -184,7 +180,7 @@ const resetAccessToken = asyncHandler(async (req, res) => {
       throw new ApiError(401, "Unauthorized request");
     }
 
-    const decodedToken = jwt.verify(
+    const decodedToken = await jwt.verify(
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
@@ -228,7 +224,6 @@ const resetAccessToken = asyncHandler(async (req, res) => {
 
 module.exports = {
   registerUser,
-  getUser,
   loginUser,
   logoutUser,
   resetAccessToken,
