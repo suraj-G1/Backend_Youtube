@@ -226,6 +226,7 @@ const changePassword = asyncHandler(async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
 
+    console.log("Passwords are", newPassword, oldPassword);
     if (!oldPassword) {
       throw new ApiError(401, "Old Password is required");
     }
@@ -233,7 +234,10 @@ const changePassword = asyncHandler(async (req, res) => {
       throw new ApiError(401, "New password is required");
     }
 
+    console.log("User",req.user)
+
     const user = await User.findById(req.user?._id);
+
     const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
     if (!isPasswordCorrect) {
       throw new ApiError(400, "Old password is incorrect");
@@ -254,4 +258,5 @@ module.exports = {
   loginUser,
   logoutUser,
   resetAccessToken,
+  changePassword,
 };
