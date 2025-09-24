@@ -4,6 +4,7 @@ const {
   getUser,
   loginUser,
   logoutUser,
+  resetAccessToken,
 } = require("../controllers/user");
 const router = express.Router();
 const { upload } = require("../middlewares/multer");
@@ -20,5 +21,5 @@ router.route("/register").post(
 router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);
 //router.route("/register").get(getUser);
-
+ router.route("/refresh-token").post(resetAccessToken)
 module.exports = router;
