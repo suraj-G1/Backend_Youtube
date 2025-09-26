@@ -234,7 +234,7 @@ const changePassword = asyncHandler(async (req, res) => {
       throw new ApiError(401, "New password is required");
     }
 
-    console.log("User",req.user)
+    console.log("User", req.user);
 
     const user = await User.findById(req.user?._id);
 
@@ -253,10 +253,31 @@ const changePassword = asyncHandler(async (req, res) => {
   }
 });
 
+const getCurrentUser = asyncHandler(async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      throw new ApiError(400, "Unauthorized access");
+    }
+    return res.status(200).json(200, user, "Current user fetched successfully");
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong");
+  }
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  try {
+  } catch (error) {
+    throw new ApiError(500, "Error while updating account details");
+  }
+});
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
   resetAccessToken,
   changePassword,
+  getCurrentUser,
 };
