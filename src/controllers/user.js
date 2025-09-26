@@ -268,8 +268,84 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
   try {
+    const { email, fullname } = req.body;
+
+    if (!email || !fullname) {
+      throw new ApiError(400, "Each field is required");
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $set: {
+          fullname,
+          email,
+        },
+      },
+      { new: true }
+    ).select("-password");
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "Account details updated successfully"));
   } catch (error) {
     throw new ApiError(500, "Error while updating account details");
+  }
+});
+
+const updateAvatar = asyncHandler(async (req, res) => {
+  try {
+    const avatar = req.file?.path;
+    if (!avatar) {
+      throw new ApiError(400, "Avatar file is required");
+    }
+
+    const user = req.user;
+
+    const upload = await uploadToCloudinary(avatar);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      {
+        $set: { avatar: upload.secure_url },
+      },
+      { new: true }
+    ).select("-password");
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, updatedUser, "Avatar updated successfully"));
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while updating Avatar");
+  }
+});
+
+const updateCoverImage = asyncHandler(async (req, res) => {
+  try {
+    const coverImage = req.file?.path;
+    if (!coverImage) {
+      throw new ApiError(400, "Cover Image is required");
+    }
+
+    const user = req.user;
+
+    const upload = await uploadToCloudinary(avatar);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      {
+        $set: { coverImage: upload.secure_url },
+      },
+      { new: true }
+    ).select("-password");
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, updatedUser, "Cover Image updated successfully")
+      );
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while updating Cover Image");
   }
 });
 
@@ -280,4 +356,7 @@ module.exports = {
   resetAccessToken,
   changePassword,
   getCurrentUser,
+  updateAccountDetails,
+  updateAvatar,
+  updateCoverImage,
 };
